@@ -6,7 +6,6 @@ const questionRoutes = require('./routes/question');
 const cors = require('cors');
 
 
-
 dotenv.config();
 
 const app = express();
