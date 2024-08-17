@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Técnico Auxiliar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .quiz-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .quiz-item {
+            background-color: #e7e7e7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            width: 75%;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        .quiz-item h3 {
+            margin-top: 0;
+        }
+
+        .options {
+            margin: 15px 0;
+        }
+
+        .options div {
+            margin-bottom: 10px;
+        }
+
+        .reveal-answer {
+            display: none;
+            margin-top: 20px;
+            background-color: #d0f0d0;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .reveal-answer p {
+            margin: 5px 0;
+        }
+
+        .show-answer {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .category-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .category-buttons button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 20px 40px;
+            cursor: pointer;
+            border-radius: 10px;
+            margin: 10px;
+            font-size: 20px;
+            transition: all 0.5s ease;
+        }
+
+        #back-button {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+
+        .navigation-buttons {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .navigation-buttons button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            margin: 0 10px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Quiz Técnico Auxiliar</h1>
+
+    <div class="category-buttons">
+        <button id="btn-legal" onclick="loadQuiz('legal')">Preguntas Legales</button>
+        <button id="btn-tecnica" onclick="loadQuiz('tecnica')">Preguntas Técnicas</button>
+    </div>
+
+    <button id="back-button" onclick="goBack()">Volver</button>
+
+    <div id="quiz-container" class="quiz-container">
+        <!-- Aquí se cargará una pregunta por vez -->
+    </div>
+
+    <div class="navigation-buttons">
+        <button id="prev-question" onclick="navigateQuestion(-1)">Anterior</button>
+        <button id="next-question" onclick="navigateQuestion(1)">Siguiente</button>
+    </div>
+
+    <script>
+        let questions = [];
+        let currentQuestionIndex = 0;
+
+        function goBack() {
+            document.getElementById('quiz-container').innerHTML = '';
+            document.getElementById('back-button').style.display = 'none';
+            document.querySelector('.category-buttons').style.display = 'flex';
+            document.querySelector('.navigation-buttons').style.display = 'none';
+            currentQuestionIndex = 0;
+            questions = [];
+        }
+
+        async function loadQuiz(category) {
+            const response = await fetch('http://localhost:3000/api/questions', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+            });
+
+            if (response.ok) {
+                questions = await response.json();
+
+                // Filtrar las preguntas según la categoría
+                if (category === 'legal') {
+                    questions = questions.slice(0, 30);  // Primeras 30 preguntas
+                } else if (category === 'tecnica') {
+                    questions = questions.slice(-30);  // Últimas 30 preguntas
+                }
+
+                document.querySelector('.category-buttons').style.display = 'none';
+                document.getElementById('back-button').style.display = 'block';
+                document.querySelector('.navigation-buttons').style.display = 'flex';
+
+                renderQuestion(currentQuestionIndex);
+            } else {
+                console.error('Error al cargar las preguntas.');
+            }
+        }
+
+        function renderQuestion(index) {
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.innerHTML = ''; // Limpia el contenido previo
+
+            if (index >= 0 && index < questions.length) {
+                const question = questions[index];
+
+                const quizItem = document.createElement('div');
+                quizItem.className = 'quiz-item';
+
+                quizItem.innerHTML = `
+                    <h3>Pregunta ${question.id}: </h3>
+                    <h3>${question.pregunta}</h3>
+                    <div class="options">
+                        <div>Opción a: ${question.opcionA}</div>
+                        <div>Opción b: ${question.opcionB}</div>
+                        <div>Opción c: ${question.opcionC}</div>
+                        <div>Opción d: ${question.opcionD}</div>
+                    </div>
+                    <button class="show-answer" onclick="toggleAnswer(this)">Mostrar respuesta</button>
+                    <div class="reveal-answer">
+                        <p>Respuesta: opción ${question.respuesta}</p>
+                        <p>Explicación teórica: ${question.teoria}</p>
+                    </div>
+                `;
+
+                quizContainer.appendChild(quizItem);
+            }
+
+            updateNavigationButtons();
+        }
+
+        function toggleAnswer(button) {
+            const answerDiv = button.nextElementSibling;
+            if (answerDiv.style.display === "none" || answerDiv.style.display === "") {
+                answerDiv.style.display = "block";
+                button.textContent = "Ocultar respuesta";
+            } else {
+                answerDiv.style.display = "none";
+                button.textContent = "Mostrar respuesta";
+            }
+        }
+
+        function navigateQuestion(direction) {
+            currentQuestionIndex += direction;
+
+            if (currentQuestionIndex >= 0 && currentQuestionIndex < questions.length) {
+                renderQuestion(currentQuestionIndex);
+            }
+        }
+
+        function updateNavigationButtons() {
+            document.getElementById('prev-question').disabled = currentQuestionIndex === 0;
+            document.getElementById('next-question').disabled = currentQuestionIndex === questions.length - 1;
+        }
+    </script>
+</body>
+</html>
+
+<!-- <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Técnico Auxiliar</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <h1>Quiz Técnico Auxiliar</h1>
+
+    <div class="category-buttons">
+        <button id="btn-legal" onclick="loadQuiz('legal')">Preguntas Legales</button>
+        <button id="btn-tecnica" onclick="loadQuiz('tecnica')">Preguntas Técnicas</button>
+    </div>
+
+    <button id="back-button" onclick="goBack()">Volver</button>
+
+    <div id="quiz-container" class="quiz-container">
+       
+    </div>
+
+    <div class="navigation-buttons">
+        <button id="prev-question" onclick="navigateQuestion(-1)">Anterior</button>
+        <button id="next-question" onclick="navigateQuestion(1)">Siguiente</button>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html> -->
