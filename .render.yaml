@@ -1,7 +1,7 @@
 services:
   - type: web
-    name: my-service
-    rootDir: ./back  # Esto apunta al subdirectorio donde está package.json
+    name: quiz-app
+    rootDir: ./back
     env: node
     buildCommand: yarn install
-    startCommand: npm start
+    startCommand: yarn start
