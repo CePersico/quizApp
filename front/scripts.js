@@ -9,9 +9,11 @@ let questions = [];
             currentQuestionIndex = 0;
             questions = [];
         }
+const URL_1='http://localhost:10000/api/questions'
+const URL_2='http://localhost:3000/api/questions'
 
         async function loadQuiz(category) {
-            const response = await fetch('http://localhost:3000/api/questions', {
+            const response = await fetch(URL_1 || URL_2, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
